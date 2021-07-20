@@ -14,37 +14,26 @@ Program description
 
 """
 
-from sklearn.preprocessing import PolynomialFeatures
-
 import pandas as pd 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sn
-
-
 
 from sklearn.metrics import accuracy_score, median_absolute_error, r2_score,mean_squared_error, explained_variance_score, max_error
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor 
-from sklearn.ensemble import AdaBoostRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 
 
-from sklearn.feature_selection import RFE
-from sklearn.feature_selection import RFECV
+from sklearn.feature_selection import RFE,RFECV
 from sklearn.pipeline import Pipeline
 
 from datetime import datetime
-from sklearn.tree import export_graphviz
 
-
-
-
-
-    
+  
 
 def get_date(series):
          return series.str.slice(8,11)
@@ -72,7 +61,7 @@ def buildDataStructure():
     gym_data['day_of_month'] = gym_data[['date']].apply(get_date)
     
     #build independent varables and dependent variable( number of people in the gym)
-    crowds_X = gym_data.iloc[:, 2:-1]
+    crowds_X = gym_data.iloc[:, 2:10]
     crowds_Y = gym_data.iloc[:, 0:1]
     
     
@@ -118,7 +107,7 @@ if __name__ =="__main__":
         "Decision Tree Regressor": DecisionTreeRegressor(random_state = 0),
         "RFE Decission Tree Regressor":RFECV( DecisionTreeRegressor(random_state = 0) ),
         "KNN Regressor": KNeighborsRegressor(n_neighbors=12),
-        "Random Forest Regressor": RandomForestRegressor(n_estimators = 1000, random_state = 42)
+        "Random Forest Regressor": RandomForestRegressor(n_estimators = 100, random_state = 42)
         
         }
     
