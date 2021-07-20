@@ -32,6 +32,7 @@ from sklearn.feature_selection import RFE,RFECV
 from sklearn.pipeline import Pipeline
 
 from datetime import datetime
+import time
 
   
 
@@ -55,13 +56,14 @@ def buildDataStructure():
     del gym_data['is_holiday']
     
     del gym_data['timestamp']
+    del gym_data['is_start_of_semester']
     
    
     #dataframe with only the day of the month from the date
     gym_data['day_of_month'] = gym_data[['date']].apply(get_date)
     
     #build independent varables and dependent variable( number of people in the gym)
-    crowds_X = gym_data.iloc[:, 2:10]
+    crowds_X = gym_data.iloc[:, 2:]
     crowds_Y = gym_data.iloc[:, 0:1]
     
     
@@ -72,7 +74,7 @@ def buildDataStructure():
     return gym_data, crowds_X_train, crowds_X_test, crowds_Y_train, crowds_Y_test
 
    
-def getRegressionMetrics(model_name,predicted_results):
+def getRegressionMetrics(model_name,predicted_results,time):
     crowd_mean_square_error = mean_squared_error(crowds_Y_test,predicted_results)
     crowd_r2 = r2_score(crowds_Y_test,predicted_results)
     crowd_root_mean_square_error = np.sqrt(crowd_mean_square_error)
@@ -87,6 +89,7 @@ def getRegressionMetrics(model_name,predicted_results):
                "Median Absolute Error": crowd_median_absolute_error,
                "Max Error": crowd_max_error,
                "Explained Varience Score": crowd_explained_variance_score,
+               "Prediction Time in seconds": time,
                "Actual Results": list(predicted_results)
                }
     return new_row
@@ -98,23 +101,28 @@ if __name__ =="__main__":
     gym_data, crowds_X_train, crowds_X_test, crowds_Y_train, crowds_Y_test = buildDataStructure()
     
     column_names =["Model","R Squared", "Mean Square Error","Root Mean Square Error",
-                   "Median Absolute Error","Max Error", "Explained Varience Score","Actual Results"]
+                   "Median Absolute Error","Max Error", "Explained Varience Score","Prediction Time","Actual Results"]
     results_df = pd.DataFrame(columns = column_names)
 
     gym_models = {
         "linear Regression": LinearRegression(),
         "RFE Linear Regression": RFECV(LinearRegression()),
         "Decision Tree Regressor": DecisionTreeRegressor(random_state = 0),
+        "Decision Tree Regressor 2": DecisionTreeRegressor(splitter = "best",max_depth=10),
         "RFE Decission Tree Regressor":RFECV( DecisionTreeRegressor(random_state = 0) ),
         "KNN Regressor": KNeighborsRegressor(n_neighbors=12),
         "Random Forest Regressor": RandomForestRegressor(n_estimators = 100, random_state = 42)
         
         }
+    numeric_results = pd.DataFrame(list(crowds_Y_test.number_people), columns=["Actual"])
     
     for name, model in gym_models.items():
         model.fit(crowds_X_train, crowds_Y_train.values.ravel())
+        start = time.time()
         predictions = model.predict(crowds_X_test)
         predictions = predictions.astype(int)
-        results_df = results_df.append(getRegressionMetrics(name,predictions), ignore_index=True)
- 
-
+        prediction_time = str(time.time()- start)
+        results_df = results_df.append(getRegressionMetrics(name,predictions,prediction_time), ignore_index=True)
+        numeric_results[name] = predictions
+     
+   
